@@ -1,0 +1,1 @@
+"""WearWise AI service package."""
