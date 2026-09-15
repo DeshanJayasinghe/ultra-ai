@@ -25,6 +25,7 @@ from wearwise_ai.models.classification.openai_adapter import (
 )
 from wearwise_ai.models.openai_vision import (
     _attribute_schema,
+    _ratio,
     _data_url,
     _optional_string,
     _response_json,
@@ -33,7 +34,7 @@ from wearwise_ai.models.openai_vision import (
     _suggestions,
 )
 
-GARMENT_ANALYSIS_PROCESSING_VERSION = "garment-analysis-v1"
+GARMENT_ANALYSIS_PROCESSING_VERSION = "garment-analysis-v2"
 
 
 class OpenAIResponsesClient(Protocol):
@@ -61,7 +62,7 @@ class OpenAIGarmentAnalysisConfig:
     model_version: str = CLOTHING_CLASSIFICATION_MODEL_VERSION
     image_detail: str = "low"
     reasoning_effort: str = "minimal"
-    max_output_tokens: int = 900
+    max_output_tokens: int = 1600
     verbosity: str = "low"
     max_image_edge: int = 512
     processing_version: str = GARMENT_ANALYSIS_PROCESSING_VERSION
@@ -117,7 +118,19 @@ class OpenAIGarmentAnalyser:
                                 "Return the category and visible garment attributes using only "
                                 "the allowed schema values. Use unknown for category when evidence "
                                 "is insufficient. Only return a brand when a visible logo, label, "
-                                "or wordmark identifies it."
+                                "or wordmark identifies it. "
+                                "Also report the garment geometry, because it drives how the item "
+                                "is laid out on a body: garment_length and sleeve_length as they "
+                                "would fall when worn, neckline, fit, rise for bottoms, "
+                                "waist_position, closure, and layer_role saying whether this is "
+                                "worn against the skin (base), over a base (mid), on top of an "
+                                "outfit (outer), or alone (single). "
+                                "Report warmth_rating as how warm the garment actually is to wear "
+                                "from the visible fabric weight and construction, not from its "
+                                "category: a thin linen shirt and a heavy flannel shirt differ. "
+                                "Report formality_score on the same continuous scale. "
+                                "Report condition and any visible_flaws honestly from the image. "
+                                "Return null for any field the image does not show."
                             ),
                         }
                     ],
@@ -274,6 +287,26 @@ def _analysis_from_payload(
         occasions=_suggestions(payload.get("occasions")),
         formality=_suggestion(payload.get("formality")),
         style_tags=_suggestions(payload.get("style_tags")),
+        garment_length=_suggestion(payload.get("garment_length")),
+        sleeve_length=_suggestion(payload.get("sleeve_length")),
+        neckline=_suggestion(payload.get("neckline")),
+        fit=_suggestion(payload.get("fit")),
+        rise=_suggestion(payload.get("rise")),
+        waist_position=_suggestion(payload.get("waist_position")),
+        closure=_suggestion(payload.get("closure")),
+        layer_role=_suggestion(payload.get("layer_role")),
+        transparency=_suggestion(payload.get("transparency")),
+        structure=_suggestion(payload.get("structure")),
+        pattern_scale=_suggestion(payload.get("pattern_scale")),
+        visual_weight=_suggestion(payload.get("visual_weight")),
+        texture=_suggestion(payload.get("texture")),
+        formality_score=_ratio(payload.get("formality_score")),
+        warmth_rating=_ratio(payload.get("warmth_rating")),
+        water_resistance=_suggestion(payload.get("water_resistance")),
+        care_difficulty=_suggestion(payload.get("care_difficulty")),
+        condition=_suggestion(payload.get("condition")),
+        visible_flaws=_suggestions(payload.get("visible_flaws")),
+        estimated_age=_suggestion(payload.get("estimated_age")),
         model_family=ATTRIBUTE_EXTRACTION_MODEL_FAMILY,
         model_name=config.model_name,
         model_version=config.model_version,

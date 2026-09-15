@@ -35,6 +35,16 @@ class AttributeSuggestion:
 
 
 @dataclass(frozen=True, slots=True)
+class RatioSuggestion:
+    """A continuous 0..1 signal. formality_score and warmth_rating use this
+    because a discrete enum loses information the scoring engine needs."""
+
+    value: float
+    confidence: float
+    reason: str
+
+
+@dataclass(frozen=True, slots=True)
 class RawAttributeExtraction:
     subcategory: AttributeSuggestion | None
     brand: AttributeSuggestion | None
@@ -49,6 +59,29 @@ class RawAttributeExtraction:
     model_version: str
     review_required: bool = False
     review_reason: str | None = None
+    # --- v2 fields. All optional: items analysed under garment-analysis-v1 have
+    # none of these, and every consumer must treat absence as "not recorded"
+    # rather than as a zero or a default.
+    garment_length: AttributeSuggestion | None = None
+    sleeve_length: AttributeSuggestion | None = None
+    neckline: AttributeSuggestion | None = None
+    fit: AttributeSuggestion | None = None
+    rise: AttributeSuggestion | None = None
+    waist_position: AttributeSuggestion | None = None
+    closure: AttributeSuggestion | None = None
+    layer_role: AttributeSuggestion | None = None
+    transparency: AttributeSuggestion | None = None
+    structure: AttributeSuggestion | None = None
+    pattern_scale: AttributeSuggestion | None = None
+    visual_weight: AttributeSuggestion | None = None
+    texture: AttributeSuggestion | None = None
+    formality_score: RatioSuggestion | None = None
+    warmth_rating: RatioSuggestion | None = None
+    water_resistance: AttributeSuggestion | None = None
+    care_difficulty: AttributeSuggestion | None = None
+    condition: AttributeSuggestion | None = None
+    visible_flaws: tuple[AttributeSuggestion, ...] = ()
+    estimated_age: AttributeSuggestion | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -68,6 +101,26 @@ class AttributeExtractionResult:
     model_version: str
     processing_version: str
     metrics: dict[str, int | float | str]
+    garment_length: AttributeSuggestion | None = None
+    sleeve_length: AttributeSuggestion | None = None
+    neckline: AttributeSuggestion | None = None
+    fit: AttributeSuggestion | None = None
+    rise: AttributeSuggestion | None = None
+    waist_position: AttributeSuggestion | None = None
+    closure: AttributeSuggestion | None = None
+    layer_role: AttributeSuggestion | None = None
+    transparency: AttributeSuggestion | None = None
+    structure: AttributeSuggestion | None = None
+    pattern_scale: AttributeSuggestion | None = None
+    visual_weight: AttributeSuggestion | None = None
+    texture: AttributeSuggestion | None = None
+    formality_score: RatioSuggestion | None = None
+    warmth_rating: RatioSuggestion | None = None
+    water_resistance: AttributeSuggestion | None = None
+    care_difficulty: AttributeSuggestion | None = None
+    condition: AttributeSuggestion | None = None
+    visible_flaws: tuple[AttributeSuggestion, ...] = ()
+    estimated_age: AttributeSuggestion | None = None
 
     def to_ai_result(self) -> dict[str, object]:
         return {
@@ -79,6 +132,26 @@ class AttributeExtractionResult:
             "occasions": [_attribute_to_payload(item) for item in self.occasions],
             "formality": _attribute_to_payload(self.formality),
             "style_tags": [_attribute_to_payload(item) for item in self.style_tags],
+            "garment_length": _attribute_to_payload(self.garment_length),
+            "sleeve_length": _attribute_to_payload(self.sleeve_length),
+            "neckline": _attribute_to_payload(self.neckline),
+            "fit": _attribute_to_payload(self.fit),
+            "rise": _attribute_to_payload(self.rise),
+            "waist_position": _attribute_to_payload(self.waist_position),
+            "closure": _attribute_to_payload(self.closure),
+            "layer_role": _attribute_to_payload(self.layer_role),
+            "transparency": _attribute_to_payload(self.transparency),
+            "structure": _attribute_to_payload(self.structure),
+            "pattern_scale": _attribute_to_payload(self.pattern_scale),
+            "visual_weight": _attribute_to_payload(self.visual_weight),
+            "texture": _attribute_to_payload(self.texture),
+            "formality_score": _attribute_to_payload(self.formality_score),
+            "warmth_rating": _attribute_to_payload(self.warmth_rating),
+            "water_resistance": _attribute_to_payload(self.water_resistance),
+            "care_difficulty": _attribute_to_payload(self.care_difficulty),
+            "condition": _attribute_to_payload(self.condition),
+            "visible_flaws": [_attribute_to_payload(item) for item in self.visible_flaws],
+            "estimated_age": _attribute_to_payload(self.estimated_age),
         }
 
     def to_complete_payload(self, *, worker_id: str) -> dict[str, object]:
